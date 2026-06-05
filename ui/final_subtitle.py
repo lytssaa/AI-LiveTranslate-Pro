@@ -200,6 +200,7 @@ if PYQT_AVAILABLE:
             action_opacity = menu.addAction("🔍 背景透明度…")
             action_font   = menu.addAction("🔤 字体颜色…")
             menu.addSeparator()
+            action_xs = menu.addAction("📏 字号：极小 (12)")
             action_s = menu.addAction("📏 字号：小 (18)")
             action_m = menu.addAction("📏 字号：中 (24)")
             action_l = menu.addAction("📏 字号：大 (32)")
@@ -216,6 +217,8 @@ if PYQT_AVAILABLE:
                 self._pick_opacity()
             elif action == action_font:
                 self._pick_font_color()
+            elif action == action_xs:
+                self._set_font_size(12)
             elif action == action_s:
                 self._set_font_size(18)
             elif action == action_m:

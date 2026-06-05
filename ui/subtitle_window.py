@@ -607,6 +607,7 @@ if PYQT_AVAILABLE:
             action_bg = menu.addAction("🎨 背景颜色…")
             action_font = menu.addAction("🔤 字体颜色…")
             menu.addSeparator()
+            action_size_xs = menu.addAction("📏 字号：极小 (10)")
             action_size_s = menu.addAction("📏 字号：小 (14)")
             action_size_m = menu.addAction("📏 字号：中 (22)")
             action_size_l = menu.addAction("📏 字号：大 (32)")
@@ -621,6 +622,8 @@ if PYQT_AVAILABLE:
                 self._pick_bg_color()
             elif action == action_font:
                 self._pick_font_color()
+            elif action == action_size_xs:
+                self._set_font_size(10)
             elif action == action_size_s:
                 self._set_font_size(14)
             elif action == action_size_m:
