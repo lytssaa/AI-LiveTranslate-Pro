@@ -370,13 +370,12 @@ class Summarizer:
             # 降级：用渐进摘要 + 字幕拼一个简单版本
             parts = []
             if self._last_summary:
-                parts.append(f"# 会议纪要\n\n## 内容摘要\n\n{self._last_summary}")
-            parts.append(f"\n## 完整字幕\n\n{transcript}")
+                return f"# 会议摘要\n\n{self._last_summary}"
             return "\n".join(parts)
 
     def _call_llm_for_final_notes(self, transcript: str, progressive_summary: str) -> str:
         """调用 LLM 生成结构化完整会议纪要"""
-        fallback = f"# 会议纪要\n\n## 内容摘要\n\n{progressive_summary}\n\n## 完整字幕\n\n{transcript}"
+        fallback = f"# 会议摘要\n\n{progressive_summary}\n"
         try:
             user_content = f"## 实时摘要\n{progressive_summary}\n\n## 完整字幕\n{transcript}"
             resp = requests.post(
@@ -391,14 +390,14 @@ class Summarizer:
                         {
                             "role": "system",
                             "content": (
-                                "你是一位专业的国际会议秘书。请根据提供的实时摘要和完整字幕，"
-                                "生成一份结构化的 Markdown 会议纪要。\n\n"
-                                "必须包含以下章节：\n"
-                                "1. **会议概览** — 整体主题与目标（2-3 句）\n"
-                                "2. **核心议题** — 列出讨论的主要话题，每项 1-2 句\n"
-                                "3. **关键结论** — 达成的共识或决定\n"
-                                "4. **待办事项** — 如有明确的后续行动\n\n"
-                                "用专业、简洁的中文撰写。"
+                                "你是一个会议内容总结助手。请根据提供的实时摘要和完整字幕，"
+                                "生成一份简洁的会议内容摘要。\n\n"
+                                "要求：\n"
+                                "- 用 Markdown 格式输出\n"
+                                "- 提炼主要讨论内容和关键结论，不需要固定章节模板\n"
+                                "- 如果内容不够充实，宁可简短也不要编造\n"
+                                "- 控制在 500 字以内\n\n"
+                                "只输出摘要内容本身，不加任何前缀。"
                             ),
                         },
                         {"role": "user", "content": user_content},

@@ -173,6 +173,7 @@ class SettingsWindow(QWidget):
         self._build_ui()
         self._load_current_values()
 
+
     # ── UI 构建 ──
 
     def _build_ui(self) -> None:

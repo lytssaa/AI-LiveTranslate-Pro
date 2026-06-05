@@ -308,8 +308,10 @@ def main() -> None:
         QTimer.singleShot(0, _do_restart)
 
     # ── 6. 设置窗口定位工具 ──
-    def _place_settings_window(settings_win, anchor_window):
-        """将设置窗口放在锚点窗口右侧，确保不超出屏幕边界"""
+    def _calc_settings_rect(settings_win, anchor_window):
+        """计算设置窗口的目标矩形（不执行移动）。
+        返回 QRect，在 show() 之前用 setGeometry() 一步到位，消除闪现。"""
+        from PyQt6.QtCore import QRect
         from PyQt6.QtGui import QScreen
         win_size = settings_win.size()
 
@@ -327,7 +329,7 @@ def main() -> None:
             else:
                 x, y = 200, 200
 
-        # 确保不超出屏幕右边界
+        # 确保不超出屏幕边界
         screen = QApplication.screenAt(anchor_window.geometry().center()) if anchor_window and anchor_window.isVisible() else QApplication.primaryScreen()
         if screen:
             sg = screen.availableGeometry()
@@ -340,7 +342,7 @@ def main() -> None:
             if x < sg.left():
                 x = sg.left() + 10
 
-        settings_win.move(x, y)
+        return QRect(x, y, win_size.width(), win_size.height())
 
     # ── 7. 设置窗口（非模态）──
     _settings_win = None  # 单例引用
@@ -385,10 +387,31 @@ def main() -> None:
         _settings_win.llm_saved.connect(_on_llm_saved)
         _settings_win.engine_restart_needed.connect(_on_engine_restart_needed)
 
-        # 先让布局计算窗口大小，再定位到安全位置，最后显示 — 避免居中闪烁 + 出屏
+        # 防闪现：Win32 SetWindowPos 兆底强制位置
+        # Qt 层所有方法都无法完全阻止 Windows WM_SHOWWINDOW 的默认放置。
+        # show() 后立即用 SetWindowPos 重设 HWND 位置，最小化闪现帧数。
         _settings_win.adjustSize()
-        _place_settings_window(_settings_win, window)
+        _settings_win.ensurePolished()
+        _settings_win.layout().activate()
+        _settings_win.resize(_settings_win.sizeHint())
+        rect = _calc_settings_rect(_settings_win, window)
+        _settings_win.setGeometry(rect)
         _settings_win.show()
+
+        # Win32: show() 后立即纠正 HWND 位置（先计算好坐标）
+        import ctypes
+        try:
+            hwnd = int(_settings_win.winId())
+            SWP_NOACTIVATE = 0x0010
+            SWP_NOSIZE = 0x0001
+            SWP_NOZORDER = 0x0004
+            ctypes.windll.user32.SetWindowPos(
+                hwnd, 0,
+                rect.x(), rect.y(), 0, 0,
+                SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER
+            )
+        except Exception:
+            pass
 
     window.set_settings_callback(open_settings)
     window.set_pause_callback(toggle_pause)
