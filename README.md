@@ -53,7 +53,7 @@ python main.py
 
 ## Demo 视频
 
-（待上传）
+[▶ 观看演示视频](demo.mp4)
 
 ## 许可证
 
