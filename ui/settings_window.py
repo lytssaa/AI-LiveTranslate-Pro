@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
     QLabel, QPushButton, QSlider, QComboBox, QLineEdit, QToolButton,
     QCheckBox, QFormLayout, QMessageBox,
 )
@@ -71,7 +71,7 @@ class CollapsibleSection(QWidget):
         self._btn.setText(f"  {arrow}  {self._title_text}")
 
 
-class SettingsWindow(QDialog):
+class SettingsWindow(QWidget):
     """设置对话框 — Gummy 参数 + LLM API（非模态，可边用边改）"""
 
     # 信号：LLM 配置变更（无需重启，热重载即可）
@@ -98,15 +98,18 @@ class SettingsWindow(QDialog):
         self._orig_llm_model = CONFIG.get("llm_model", "qwen-plus")
 
         self.setWindowTitle("⚙️  设置 — AI LiveTranslate Pro")
+        self.setObjectName("SettingsWindow")
         self.setMinimumWidth(440)
         self.setMaximumWidth(520)
         self.setWindowFlags(
-            self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint
+            Qt.WindowType.Window |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.WindowCloseButtonHint
         )
 
         # 统一深色主题：与 CollapsibleSection 面板颜色一致
         self.setStyleSheet("""
-            QDialog {
+            QWidget#SettingsWindow {
                 background: #1a1a2e;
                 color: #e0e0e0;
             }
@@ -461,7 +464,7 @@ class SettingsWindow(QDialog):
         btn_layout.addStretch()
 
         cancel_btn = QPushButton("取消")
-        cancel_btn.clicked.connect(self.reject)
+        cancel_btn.clicked.connect(self.close)
         cancel_btn.setStyleSheet("""
             QPushButton {
                 padding: 8px 20px; border: 1px solid #555;

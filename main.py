@@ -307,7 +307,42 @@ def main() -> None:
 
         QTimer.singleShot(0, _do_restart)
 
-    # ── 6. 设置窗口（非模态）──
+    # ── 6. 设置窗口定位工具 ──
+    def _place_settings_window(settings_win, anchor_window):
+        """将设置窗口放在锚点窗口右侧，确保不超出屏幕边界"""
+        from PyQt6.QtGui import QScreen
+        win_size = settings_win.size()
+
+        if anchor_window and anchor_window.isVisible():
+            anchor_geo = anchor_window.geometry()
+            x = anchor_geo.right() + 10
+            y = anchor_geo.top()
+        else:
+            # 主窗口不可见时，放在当前屏幕中央偏上
+            screen = QApplication.primaryScreen()
+            if screen:
+                sg = screen.availableGeometry()
+                x = sg.x() + (sg.width() - win_size.width()) // 2
+                y = sg.y() + (sg.height() - win_size.height()) // 3
+            else:
+                x, y = 200, 200
+
+        # 确保不超出屏幕右边界
+        screen = QApplication.screenAt(anchor_window.geometry().center()) if anchor_window and anchor_window.isVisible() else QApplication.primaryScreen()
+        if screen:
+            sg = screen.availableGeometry()
+            if x + win_size.width() > sg.right():
+                x = sg.right() - win_size.width() - 10
+            if y + win_size.height() > sg.bottom():
+                y = sg.bottom() - win_size.height() - 10
+            if y < sg.top():
+                y = sg.top() + 10
+            if x < sg.left():
+                x = sg.left() + 10
+
+        settings_win.move(x, y)
+
+    # ── 7. 设置窗口（非模态）──
     _settings_win = None  # 单例引用
 
     def open_settings():
@@ -350,10 +385,9 @@ def main() -> None:
         _settings_win.llm_saved.connect(_on_llm_saved)
         _settings_win.engine_restart_needed.connect(_on_engine_restart_needed)
 
-        # 定位到主窗口旁边再显示，避免一闪而过
-        if window.isVisible():
-            main_geo = window.geometry()
-            _settings_win.move(main_geo.right() + 10, main_geo.top())
+        # 先让布局计算窗口大小，再定位到安全位置，最后显示 — 避免居中闪烁 + 出屏
+        _settings_win.adjustSize()
+        _place_settings_window(_settings_win, window)
         _settings_win.show()
 
     window.set_settings_callback(open_settings)
@@ -361,12 +395,12 @@ def main() -> None:
     window.set_stop_session_callback(stop_session)
     window.set_exit_callback(lambda: shutdown())
 
-    # ── 7. 系统托盘 ──
+    # ── 8. 系统托盘 ──
     tray_icon = None
     if PYQT_AVAILABLE:
         tray_icon = _setup_tray(app, window, transcript, final_sub, open_settings)
 
-    # ── 8. 退出信号处理 ──
+    # ── 9. 退出信号处理 ──
     def shutdown(signum=None, frame=None):
         print("\n[main] 正在关闭所有模块...")
         stop_engine()
@@ -422,7 +456,7 @@ def main() -> None:
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    # ── 9. 启动非引擎模块（先让窗口出来，再启引擎防崩）──
+    # ── 10. 启动非引擎模块（先让窗口出来，再启引擎防崩）──
     print("[main] 启动语义分析...")
     summarizer.start()
 
@@ -430,7 +464,7 @@ def main() -> None:
         print("[main] 启动上下文纠错...")
         corrector.start()
 
-    # ── 10. 先显示窗口，引擎延迟启动 ──
+    # ── 11. 先显示窗口，引擎延迟启动 ──
     print("[main] 显示悬浮窗...")
     print("[main] 提示：点击悬浮窗「⚙」按钮可打开设置")
     sys.stdout.flush()
