@@ -6,7 +6,7 @@ from __future__ import annotations
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
     QLabel, QPushButton, QSlider, QComboBox, QLineEdit, QToolButton,
-    QCheckBox, QFormLayout, QMessageBox,
+    QCheckBox, QFormLayout, QMessageBox, QApplication,
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal
 
@@ -99,8 +99,8 @@ class SettingsWindow(QWidget):
 
         self.setWindowTitle("⚙️  设置 — AI LiveTranslate Pro")
         self.setObjectName("SettingsWindow")
-        self.setMinimumWidth(440)
-        self.setMaximumWidth(520)
+        self.setMinimumWidth(700)
+        self.setMaximumWidth(900)
         self.setWindowFlags(
             Qt.WindowType.Window |
             Qt.WindowType.WindowStaysOnTopHint |
@@ -177,8 +177,18 @@ class SettingsWindow(QWidget):
     # ── UI 构建 ──
 
     def _build_ui(self) -> None:
-        main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(6)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(8, 8, 8, 4)
+        outer.setSpacing(4)
+
+        # ── 两列并排 ──
+        columns = QHBoxLayout()
+        columns.setSpacing(10)
+
+        left_col = QVBoxLayout()
+        left_col.setSpacing(6)
+        right_col = QVBoxLayout()
+        right_col.setSpacing(6)
 
         # ──── 🌐 翻译 API（百炼 Gummy）────
         gummy_sec = CollapsibleSection("🌐 翻译 API（百炼 Gummy）", expanded=True)
@@ -251,7 +261,7 @@ class SettingsWindow(QWidget):
         gummy_hint.setOpenExternalLinks(True)
         gummy_form.addRow(gummy_hint)
         gummy_sec.content_layout().addLayout(gummy_form)
-        main_layout.addWidget(gummy_sec)
+        left_col.addWidget(gummy_sec)
 
         # ──── 断句延迟（默认展开）────
         delay_sec = CollapsibleSection("⏱️ 断句延迟", expanded=True)
@@ -280,7 +290,7 @@ class SettingsWindow(QWidget):
         delay_hint.setWordWrap(True)
         delay_form.addRow(delay_hint)
         delay_sec.content_layout().addLayout(delay_form)
-        main_layout.addWidget(delay_sec)
+        left_col.addWidget(delay_sec)
 
         # ──── 翻译方向（默认折叠）────
         lang_sec = CollapsibleSection("🌐 翻译方向", expanded=False)
@@ -321,7 +331,7 @@ class SettingsWindow(QWidget):
         lang_hint.setWordWrap(True)
         lang_form.addRow(lang_hint)
         lang_sec.content_layout().addLayout(lang_form)
-        main_layout.addWidget(lang_sec)
+        right_col.addWidget(lang_sec)
 
         # ──── 音频输入源（默认折叠）────
         audio_sec = CollapsibleSection("🎙 音频输入源", expanded=False)
@@ -349,7 +359,7 @@ class SettingsWindow(QWidget):
         audio_hint.setWordWrap(True)
         audio_form.addRow(audio_hint)
         audio_sec.content_layout().addLayout(audio_form)
-        main_layout.addWidget(audio_sec)
+        right_col.addWidget(audio_sec)
 
         # ──── 双向翻译模式（默认折叠）────
         bi_sec = CollapsibleSection("🔄 双向翻译模式（实验性）", expanded=False)
@@ -372,7 +382,7 @@ class SettingsWindow(QWidget):
         bi_hint.setWordWrap(True)
         bi_form.addRow(bi_hint)
         bi_sec.content_layout().addLayout(bi_form)
-        main_layout.addWidget(bi_sec)
+        left_col.addWidget(bi_sec)
 
         # ──── 🤖 主题摘要 & 纠错 LLM API（默认展开）────
         api_sec = CollapsibleSection("🤖 主题摘要 & 纠错 LLM API", expanded=True)
@@ -457,10 +467,16 @@ class SettingsWindow(QWidget):
         api_hint.setWordWrap(True)
         api_form.addRow(api_hint)
         api_sec.content_layout().addLayout(api_form)
-        main_layout.addWidget(api_sec)
+        right_col.addWidget(api_sec)
 
         # ──── 按钮 ────
-        main_layout.addStretch()
+        left_col.addStretch()
+        right_col.addStretch()
+
+        columns.addLayout(left_col)
+        columns.addLayout(right_col)
+        outer.addLayout(columns)
+
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
@@ -490,7 +506,7 @@ class SettingsWindow(QWidget):
         btn_layout.addWidget(self._save_status, 1)
         btn_layout.addWidget(cancel_btn)
         btn_layout.addWidget(save_btn)
-        main_layout.addLayout(btn_layout)
+        outer.addLayout(btn_layout)
 
     # ── 当前值加载 ──
 
@@ -759,7 +775,7 @@ class SettingsWindow(QWidget):
             gummy_key != self._orig_gummy_key
             or gummy_url != self._orig_gummy_url
             or gummy_model != self._orig_gummy_model
-            or str(new_silence) != str(self._orig_silence)
+            or str(new_silence) != str(self._original_silence)
             or src_lang != self._orig_src_lang
             or tgt_lang != self._orig_tgt_lang
             or audio_src != self._orig_audio_src
@@ -795,7 +811,7 @@ class SettingsWindow(QWidget):
         self._orig_gummy_key = gummy_key
         self._orig_gummy_url = gummy_url
         self._orig_gummy_model = gummy_model
-        self._orig_silence = new_silence
+        self._original_silence = new_silence
         self._orig_src_lang = src_lang
         self._orig_tgt_lang = tgt_lang
         self._orig_audio_src = audio_src
@@ -810,9 +826,19 @@ class SettingsWindow(QWidget):
             self.llm_saved.emit()
 
         if engine_changed:
-            self.engine_restart_needed.emit()
-            self._save_status.setText("⚠ 翻译/音频设置已保存，需<b>重启引擎</b>生效")
-            self._save_status.setStyleSheet("color: #f0a040; font-size: 12px;")
+            msg = QMessageBox(self)
+            msg.setWindowTitle("需重启")
+            msg.setText("翻译/音频配置已保存。\n\n程序即将关闭，请重新启动以应用新配置。")
+            msg.setIcon(QMessageBox.Icon.Information)
+            msg.setStyleSheet("""
+                QMessageBox { background: #1a1a2e; color: #e0e0e0; }
+                QLabel { color: #e0e0e0; }
+                QPushButton { color: #e0e0e0; background: #2a2a3e; border: 1px solid #555; 
+                              padding: 6px 16px; border-radius: 4px; }
+                QPushButton:hover { background: #3a3a5e; }
+            """)
+            msg.exec()
+            QApplication.quit()
         elif llm_changed:
             self._save_status.setText("✅ LLM 配置已保存并即时生效")
             self._save_status.setStyleSheet("color: #2ecc71; font-size: 12px;")

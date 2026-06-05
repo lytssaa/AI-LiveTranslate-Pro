@@ -270,43 +270,6 @@ def main() -> None:
 
         QTimer.singleShot(0, _on_engine_stopped)
 
-    def restart_engine():
-        """热重启引擎（设置变更后调用）"""
-        print("\n[main] ===== 引擎热重启 =====")
-
-        def _do_restart():
-            try:
-                stop_engine()
-            except Exception as e:
-                print(f"[main] 停止旧引擎时出错: {e}")
-                traceback.print_exc()
-
-            # 重新加载配置
-            new_cfg = load_config()
-            for k, v in new_cfg.items():
-                CONFIG[k] = v
-
-            # 双向模式变更时更新窗口布局
-            bi = CONFIG.get("bidirectional_enabled", "false").lower() in ("true", "1", "yes")
-            window.set_dual_mode(bi)
-
-            # 更新全局双向标志
-            nonlocal _bidirectional
-            _bidirectional = bi
-
-            # 启动新引擎（给 WS/PyAudio 清理留一点时间）
-            QTimer.singleShot(300, _start_new)
-
-        def _start_new():
-            try:
-                start_engine()
-                _update_engine_status()
-            except Exception as e:
-                print(f"[main] 启动新引擎时出错: {e}")
-                traceback.print_exc()
-
-        QTimer.singleShot(0, _do_restart)
-
     # ── 6. 设置窗口定位工具 ──
     def _calc_settings_rect(settings_win, anchor_window):
         """计算设置窗口的目标矩形（不执行移动）。
@@ -371,21 +334,7 @@ def main() -> None:
             corrector.reload_llm_config()
             print("[main] ✅ 摘要 & 纠错引擎配置已热重载")
 
-        # 引擎配置变更 → 提示重启
-        def _on_engine_restart_needed():
-            print("[main] 引擎配置已变更，触发重启...")
-            try:
-                restart_engine()
-            except Exception as e:
-                traceback.print_exc()
-                if PYQT_AVAILABLE:
-                    QMessageBox.critical(
-                        None, "引擎重启失败",
-                        f"重启引擎时发生错误：\n{e}\n\n请查看终端控制台获取完整信息。"
-                    )
-
         _settings_win.llm_saved.connect(_on_llm_saved)
-        _settings_win.engine_restart_needed.connect(_on_engine_restart_needed)
 
         # 防闪现：Win32 SetWindowPos 兆底强制位置
         # Qt 层所有方法都无法完全阻止 Windows WM_SHOWWINDOW 的默认放置。
