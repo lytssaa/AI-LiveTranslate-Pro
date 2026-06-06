@@ -8,22 +8,25 @@
 - 双向翻译模式（系统音频→中文 + 麦克风→英文）
 - 渐进累积式会议摘要
 - 上下文纠错引擎
-- 悬浮字幕窗口 + 最终译文窗口
-- 设置面板热重启
+- 悬浮字幕窗口 + 最终译文窗口（支持右键自定义字号/颜色）
+- 可视化设置面板（翻译 API / LLM / 音频参数一站式配置）
 
 ## 技术栈
 
-- Python 3.11+
-- PyQt6 GUI 框架
-- 百炼 Gummy-Realtime-V1 WebSocket 实时翻译
-- DeepSeek LLM / 百炼兼容接口
-- PyAudioWPatch Loopback 音频捕获
+| 类别 | 技术 | 用途 |
+|---|---|---|
+| 框架 | PyQt6 | GUI 界面 |
+| 音频 | PyAudioWPatch | WASAPI Loopback 系统音频捕获 |
+| 翻译 | websocket-client | 百炼 Gummy-Realtime-V1 WebSocket 实时翻译 |
+| AI | requests | LLM API 调用（摘要 & 纠错） |
+
+> 以上为第三方依赖，通过 `pip install -r requirements.txt` 安装。核心业务逻辑（翻译管线、摘要引擎、纠错引擎、UI 组件）均为原创实现。
 
 ## 快速开始
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/yourname/AI_LiveTranslate_Pro.git
+git clone https://github.com/lytssaa/AI-LiveTranslate-Pro.git
 cd AI_LiveTranslate_Pro
 
 # 2. 创建虚拟环境
