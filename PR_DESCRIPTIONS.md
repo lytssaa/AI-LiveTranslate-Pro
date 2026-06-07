@@ -135,16 +135,17 @@ python main.py
 
 ---
 
-## PR #6: 摘要引擎 + 上下文纠错引擎
+## PR #6a: 摘要引擎
 
-**标题**: feat: 摘要引擎 + 上下文纠错引擎
+**标题**: feat: 会议摘要引擎
 
 **功能描述**:
-两个基于 LLM 的智能辅助模块 — 渐进累积式会议摘要和滑动窗口上下文纠错。
+基于 LLM 的渐进累积式会议摘要模块，实时生成并持续更新会议纪要。
 
 **实现思路**:
-- **Summarizer**: 定时（默认 60s）调用 LLM 生成中文摘要；渐进累积模式：每次输入「上次摘要 + 新字幕」产出更新后的整体摘要；会话结束生成结构化 Markdown 纪要
-- **Corrector**: 滑动窗口缓存最近 8 句翻译；间隔 3 句触发一次 LLM 修正；将上下文注入 prompt 提升修正准确率；异步回调不阻塞翻译管线
+- 定时（默认 60s）调用 LLM 生成中文摘要
+- 渐进累积模式：每次输入「上次摘要 + 新字幕」，产出更新后的整体摘要
+- 会话结束时自动生成结构化 Markdown 纪要并保存到文件
 
 **测试方式**:
 ```python
@@ -157,6 +158,32 @@ s.push("Revenue grew 15% year-over-year.")
 # 等待 summary_interval 秒后观察输出
 summary = s.stop()
 print(summary)
+```
+
+---
+
+## PR #6b: 上下文纠错引擎
+
+**标题**: feat: 上下文纠错引擎
+
+**功能描述**:
+基于 LLM 的滑动窗口上下文纠错模块，利用对话上下文修正翻译结果中的歧义和错误。
+
+**实现思路**:
+- 滑动窗口缓存最近 8 句翻译，间隔 3 句触发一次 LLM 修正
+- 将上下文注入 prompt 提升修正准确率，避免孤立翻译的语义偏差
+- 异步回调不阻塞翻译管线，确保实时性不受影响
+
+**测试方式**:
+```python
+from core.corrector import ContextCorrector
+
+c = ContextCorrector(on_correction=lambda r: print(f"修正: {r.old_text} → {r.new_text}"))
+c.start()
+c.push_sentence(text="收入增长了15%", original="Revenue grew 15%", start_ms=0, end_ms=1000)
+c.push_sentence(text="利润下降了", original="Profit declined", start_ms=2000, end_ms=3000)
+# 观察 LLM 修正输出
+c.stop()
 ```
 
 ---
