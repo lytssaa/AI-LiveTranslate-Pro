@@ -1,7 +1,7 @@
 # 🎙️ AI LiveTranslate Pro
 
+<h2 align="center">AI 同声翻译工具</h2>
 <p align="center">
-  <b>AI 同声翻译工具</b><br>
   实时捕获系统音频或麦克风语音，通过 AI 引擎双向翻译并生成字幕。<br>
   适用于<b>跨国会议、在线课程、外语直播</b>等场景，让语言不再成为沟通的障碍。
 </p>
