@@ -1,8 +1,7 @@
 # 🎙️ AI LiveTranslate Pro
 
 <p align="center">
-  <b>国际会议实时双向翻译系统</b><br>
-  系统音频 + 麦克风双通道并行翻译 · AI 语义增强 · 全可视化控制
+  <b>AI 同声翻译工具</b><br>
 </p>
 
 <p align="center">
