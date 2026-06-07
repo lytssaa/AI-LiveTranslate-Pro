@@ -6,6 +6,10 @@
   适用于<b>跨国会议、在线课程、外语直播</b>等场景，让语言不再成为沟通的障碍。
 </p>
 
+```bash
+git clone https://github.com/lytssaa/AI-LiveTranslate-Pro.git
+```
+
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.11+-blue" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
