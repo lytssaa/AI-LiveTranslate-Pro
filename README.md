@@ -17,10 +17,6 @@ git clone https://github.com/lytssaa/AI-LiveTranslate-Pro.git
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs">
 </p>
 
-<p align="center">
-  <img src="preview.png" alt="软件预览" width="80%">
-</p>
-
 ---
 
 ## 📖 目录
@@ -176,6 +172,10 @@ summary_interval = 60        # 摘要生成间隔 (秒)
 ---
 
 ## 🖥️ 界面说明
+
+<p align="center">
+  <img src="preview.png" alt="软件预览" width="80%">
+</p>
 
 启动后会出现三个窗口：
 
