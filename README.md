@@ -17,6 +17,10 @@ git clone https://github.com/lytssaa/AI-LiveTranslate-Pro.git
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs">
 </p>
 
+<p align="center">
+  <img src="preview.png" alt="软件预览" width="80%">
+</p>
+
 ---
 
 ## 📖 目录
